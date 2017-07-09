@@ -117,11 +117,37 @@ class Servent(object):
             self.enviaResponse(unpackedChave, valor, IPcliente, portaCliente)
 
     def trataQuery(self, receb):
-        #Checa se essa QUERY já passou nesse servidor
-        #def check (self, ip, port, seq, chave)
+        unpackedTTL = struct.unpack('!H', receb[0][2:4])
+        unpackedIP = socket.inet_ntoa(receb[0][4:8])
+        unpackedPorta = struct.unpack('!H', receb[0][8:10])
+        unpackedNumSeq = struct.unpack('!I', receb[0][10:14])
+        unpackedChave = struct.unpack('!{}s'.format(len(receb[0][14:])), receb[0][14:])
 
-        self.historico.check()
-        #na hora de enviar, tem a funcao enviaResponse aqui em cima
+        #Caso seja uma QUERY nova
+        if (self.historico.check(unpackedIP, unpackedPorta, unpackedNumSeq, unpackedChave)) #Se a query eh nova, e ja a adiciona no historico
+
+            #Procura por essa chave em seu dicionario local e se achar envia para o cliente
+            if (self.bd.existeChave(unpackedChave)): #Se o servent tem essa chave em seu dicionario
+                valor = self.bd.buscaValorAssociado(unpackedChave)
+                self.enviaResponse(unpackedChave, valor, unpackedIP, unpackedPorta)
+
+            #DAQUI PRA BAIXO FICA DENTRO DO IF DE QUERY NOVA OU NAO??**************************DUVIDA PROTOCOLO OSPF
+            #caso nao, chegar todos um pra tras (seleciona e da shift+tab)
+
+            #Decrementa TTL. Se valor resultante for maior do que zero, envia para todos os vizinhos menos o que recebu
+            novoTTL = unpackedTTL - 1
+            if (novoTTL > 0):
+                #Remonta msg com novo TTL
+                packedNovoTTL = struct.pack('!H', novoTTL)
+                msgEnvio = receb[0][0:2]+ packedNovoTTL + receb[0][4:]
+                #Envia QUERY para todos os vizinhos menos o que recebeu:
+                #ideia so, depende da estrtura de dados:
+                #for vizinho in estruturaDadosVizinhos:
+                #   if (AddrVizinho != (receb[1][0], int(receb[1][1]) ) # receb[1][0] eh o String do IP do servent que mandou pra ele,
+                                                                        # e receb[1][1] eh o string do porta do servent que mandou pra ele,
+                                                                        # que com int(receb[1][1]) converti em inteiro para fazer uma porta int.
+                #       self.sockServer.sendto(msgEnvio, (ipDoVizinhoComoString,portaVizinhoComoInt))
+
 
     def recebeMensagem(self):
         recebido = self.sockServer.recvfrom(TAM_MAX)
