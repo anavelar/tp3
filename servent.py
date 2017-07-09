@@ -64,6 +64,30 @@ class BancoDeDados(object):
     def buscaValorAssociado(self, chave): #uma vez existente a chave, busca seu valor
         return (self.dic.get(chave))
 
+#Classe que organiza a lista de visinhos do servent
+class listaVisinhos(object):
+
+    #funcao de busca de valores por index
+    def getIndex(self, index):
+        return self.lista[index]
+
+    #funcao que retorna o tamanho da lista
+    def getSize(self):
+        return self.size
+
+    #construtor
+    def __init__(self):
+        #Argumentos#
+        self.lista = list()
+        self.size = 0
+        
+        #Preenchimento da lista#
+        for i in range(3, len(sys.argv)):
+            ip, port = sys.argv[i].split(":")
+            item = (socket.inet_aton(ip), int(port))
+            self.lista.append(item)
+            self.size = self.size + 1
+
 #Servent
 class Servent(object):
 
